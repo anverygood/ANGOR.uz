@@ -1,0 +1,66 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 1. Tumanlar (Termiz shahri, Denov, Angor va h.k.)
+model District {
+  id          Int         @id @default(autoincrement())
+  name        String      @unique // Tuman nomi
+  slug        String      @unique // URL uchun (masalan: angor, denov)
+  description String?     // Tuman haqida qisqacha
+  history     String?     // Tuman tarixi va madaniyati
+  posts       Post[]
+  businesses  Business[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+// 2. Yangiliklar va Maqolalar (Google News & Discover uchun tayyor)
+model Post {
+  id           Int         @id @default(autoincrement())
+  title        String      // Yangilik sarlavhasi
+  slug         String      @unique // URL uchun
+  content      String      // Asosiy matn (HTML yoki Markdown)
+  excerpt      String?     // Qisqacha tavsif (Discover uchun muhim)
+  image        String?     // Asosiy rasm manzili
+  videoUrl     String?     // YouTube yoki video havola
+  podcastUrl   String?     // Podkast audio havola
+  published    Boolean     @default(false) // Chop etilganmi?
+  views        Int         @default(0) // Ko'rishlar soni
+  districtId   Int
+  district     District    @relation(fields: [districtId], references: [id])
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+// 3. Mahalliy Bizneslar va Lokatsiyalar katalogi
+model Business {
+  id          Int         @id @default(autoincrement())
+  name        String      // Biznes nomi (Kofe, Do'kon, Zavod va h.k.)
+  slug        String      @unique
+  category    String      // Faoliyat turi
+  address     String      // Manzil
+  mapLink     String?     // Google Maps koordinata yoki havolasi
+  phone       String?     // Bog'lanish raqami
+  description String?     // Tavsif
+  image       String?     // Biznes rasmi
+  districtId  Int
+  district    District    @relation(fields: [districtId], references: [id])
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+// 4. Aholi muammolari va Feedback (Murojaatlar)
+model Feedback {
+  id          Int         @id @default(autoincrement())
+  fullName    String      // Murojaat qiluvchi ismi
+  phone       String      // Telefon raqami
+  message     String      // Muammo matni
+  status      String      @default("Yangi") // Yangi -> O'rganilmoqda -> Hal etildi
+  createdAt   DateTime    @default(now())
+}
